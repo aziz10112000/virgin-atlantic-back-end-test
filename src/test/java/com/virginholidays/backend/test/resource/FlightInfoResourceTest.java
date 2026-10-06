@@ -1,5 +1,6 @@
 package com.virginholidays.backend.test.resource;
 
+import com.virginholidays.backend.test.api.ErrorResponse;
 import com.virginholidays.backend.test.api.Flight;
 import com.virginholidays.backend.test.service.FlightInfoService;
 import org.junit.jupiter.api.Test;
@@ -67,4 +68,37 @@ class FlightInfoResourceTest {
                 () -> resource.getResults("2026-02-30")
         );
     }
+
+    @Test
+        void shouldReturnStructuredErrorForInvalidDate() {
+
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        javax.servlet.http.HttpServletRequest request =
+                org.mockito.Mockito.mock(
+                        javax.servlet.http.HttpServletRequest.class);
+
+        org.mockito.Mockito.when(request.getRequestURI())
+                .thenReturn("/back-end-test/2026-02-30/results");
+
+        var response = handler.handleInvalidDate(
+                new java.time.format.DateTimeParseException(
+                        "Invalid date",
+                        "2026-02-30",
+                        0),
+                request);
+
+        assertEquals(400, response.getStatusCodeValue());
+
+        ErrorResponse body = response.getBody();
+
+        assertEquals(400, body.getStatus());
+        assertEquals("Bad Request", body.getError());
+        assertEquals(
+                "Invalid date. Expected format yyyy-MM-dd.",
+                body.getMessage());
+        assertEquals(
+                "/back-end-test/2026-02-30/results",
+                body.getPath());
+}
 }
